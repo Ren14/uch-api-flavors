@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ice Cream Flavors CRUD</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .flavor-item { margin: 5px 0; }
+    </style>
+</head>
+<body>
+<h1>Ice Cream Flavors</h1>
+
+<form id="flavorForm">
+    <input type="text" id="flavorName" placeholder="Enter flavor name" required>
+    <button type="submit">Add Flavor</button>
+</form>
+
+<h2>Flavor List</h2>
+<div id="flavorList"></div>
+
+<script>
+    const flavorForm = document.getElementById('flavorForm');
+    const flavorName = document.getElementById('flavorName');
+    const flavorList = document.getElementById('flavorList');
+
+    // Fetch and display flavors
+    function fetchFlavors() {
+        fetch('http://localhost:3005/flavors')
+            .then(response => response.json())
+            .then(data => {
+                flavorList.innerHTML = '';
+                data.forEach(flavor => {
+                    const flavorItem = document.createElement('div');
+                    flavorItem.className = 'flavor-item';
+                    flavorItem.innerHTML = `
+                            ${flavor.name}
+                            <button onclick="editFlavor(${flavor.id}, '${flavor.name}')">Edit</button>
+                            <button onclick="deleteFlavor(${flavor.id})">Delete</button>
+                        `;
+                    flavorList.appendChild(flavorItem);
+                });
+            });
+    }
+
+    // Add a new flavor
+    flavorForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const name = flavorName.value;
+        fetch('http://localhost:3005/flavors', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name }),
+        })
+            .then(response => {
+                if (response.ok) {
+                    fetchFlavors();
+                    flavorName.value = ''; // Clear the input
+                }
+            });
+    });
+
+    // Edit flavor
+    function editFlavor(id, initialName) {
+        const newName = prompt('Edit flavor name:', initialName);
+        if (newName) {
+            fetch(`http://localhost:3005/flavors/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: newName }),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        fetchFlavors();
+                    }
+                });
+        }
+    }
+
+    // Delete flavor
+    function deleteFlavor(id) {
+        if (confirm('Are you sure you want to delete this flavor?')) {
+            fetch(`http://localhost:3005/flavors/${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        fetchFlavors();
+                    }
+                });
+        }
+    }
+
+    // Initial fetch to populate the list
+    fetchFlavors();
+</script>
+</body>
+</html>
